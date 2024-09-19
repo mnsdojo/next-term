@@ -4,23 +4,28 @@ import { Terminal } from "@xterm/xterm";
 import "@xterm/xterm/css/xterm.css";
 
 const WEBSOCKET_URL = "ws://localhost:5001";
-const terminal = new Terminal();
+const terminal = new Terminal({ cursorBlink: true });
+
 function Xterrminal() {
   const terminalRef = useRef<HTMLDivElement>(null);
   const ws = useMemo(() => new WebSocket(WEBSOCKET_URL), []);
 
   useEffect(() => {
     if (!terminalRef.current) return;
-
     terminal.open(terminalRef.current);
-    terminal.onKey((e) => {
+
+    terminal.onData((data) => {
       ws.send(
         JSON.stringify({
           type: "command",
-          data: e.key,
+          data: data,
         })
       );
     });
+
+    return () => {
+      terminal.clear();
+    };
   }, [terminalRef, ws]);
 
   useEffect(() => {
@@ -56,7 +61,7 @@ function Xterrminal() {
       ws.removeEventListener("close", onClose);
       ws.removeEventListener("message", onMessage);
     };
-  }, []);
+  }, [terminalRef, ws]);
 
   return (
     <div className="w-full h-80 border-gray-700 rounded-lg overflow-hidden text-white">

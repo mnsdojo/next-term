@@ -1,7 +1,6 @@
 import http from "node:http";
 import { spawn } from "node-pty";
 import { createServer } from "./server";
-
 import { WebSocketServer } from "ws";
 
 const port = process.env.PORT || 5001;
@@ -12,16 +11,12 @@ const wss = new WebSocketServer({ server });
 wss.on("connection", (ws) => {
   const ptyProcess = spawn("bash", [], {
     name: "xterm-color",
-    // cwd: process.env.HOME,
     env: process.env,
   });
 
   ws.on("message", (message) => {
-    // console.log(`receieved - ${message}`);
-
     try {
       const data = JSON.parse(message.toString());
-
       if (data.type === "command") {
         ptyProcess.write(data.data);
       }
@@ -31,19 +26,20 @@ wss.on("connection", (ws) => {
   });
 
   ws.on("close", () => {
-    console.log("Closed ws");
+    console.log("WebSocket connection closed");
     ptyProcess.kill();
   });
+
   ptyProcess.onData((data) => {
-    console.log(data);
-    const message = JSON.stringify({
-      type: "data",
-      data,
-    });
-    ws.send(message);
+    ws.send(
+      JSON.stringify({
+        type: "data",
+        data,
+      })
+    );
   });
 });
 
 server.listen(port, () => {
-  console.log(`Listening on port :${port}`);
+  console.log(`Server listening on port: ${port}`);
 });
