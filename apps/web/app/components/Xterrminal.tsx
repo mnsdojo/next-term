@@ -1,36 +1,27 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import { Terminal } from "@xterm/xterm";
 import "@xterm/xterm/css/xterm.css";
 
 const WEBSOCKET_URL = "ws://localhost:5001";
-const ws = new WebSocket(WEBSOCKET_URL);
-const terminal = new Terminal({
-  cursorBlink: true,
-  theme: { background: "#1e1e1e", foreground: "#ffffff" },
-});
-
+const terminal = new Terminal();
 function Xterrminal() {
   const terminalRef = useRef<HTMLDivElement>(null);
+  const ws = useMemo(() => new WebSocket(WEBSOCKET_URL), []);
 
   useEffect(() => {
     if (!terminalRef.current) return;
 
     terminal.open(terminalRef.current);
-
-    terminal.onKey(({ key, domEvent }) => {
+    terminal.onKey((e) => {
       ws.send(
         JSON.stringify({
           type: "command",
-          data: key,
+          data: e.key,
         })
       );
     });
-
-    return () => {
-      terminal.clear();
-    };
-  }, [terminalRef]);
+  }, [terminalRef, ws]);
 
   useEffect(() => {
     const onOpen = () => {

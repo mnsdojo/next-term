@@ -21,12 +21,9 @@ wss.on("connection", (ws) => {
 
     try {
       const data = JSON.parse(message.toString());
-      switch (data.type) {
-        case "command":
-          ptyProcess.write(data.command + "\n");
-          break;
-        default:
-          console.error("Unknown message type: ", data.type);
+
+      if (data.type === "command") {
+        ptyProcess.write(data.data);
       }
     } catch (error) {
       console.error("Error parsing JSON:", error);
@@ -35,6 +32,7 @@ wss.on("connection", (ws) => {
 
   ws.on("close", () => {
     console.log("Closed ws");
+    ptyProcess.kill();
   });
   ptyProcess.onData((data) => {
     console.log(data);
